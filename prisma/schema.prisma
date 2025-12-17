@@ -10,12 +10,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model IaiUser {
+  id                String   @id @default(uuid())
+  name              String
+  email             String   @unique
+  membershipNumber  String   @unique
+  straNumber        String   @unique
+  lastPaymentAt     DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  @@map("users")
+  @@map("iai_users")
 }

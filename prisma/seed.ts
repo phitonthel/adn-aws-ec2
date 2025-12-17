@@ -5,21 +5,27 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Start seeding ...');
 
-  const user1 = await prisma.user.upsert({
+  const user1 = await prisma.iaiUser.upsert({
     where: { email: 'alice@example.com' },
     update: {},
     create: {
       email: 'alice@example.com',
       name: 'Alice',
+      membershipNumber: 'IAI-2024-001',
+      straNumber: 'STR-000001',
+      lastPaymentAt: new Date('2025-11-15'),
     },
   });
 
-  const user2 = await prisma.user.upsert({
+  const user2 = await prisma.iaiUser.upsert({
     where: { email: 'bob@example.com' },
     update: {},
     create: {
       email: 'bob@example.com',
       name: 'Bob',
+      membershipNumber: 'IAI-2024-002',
+      straNumber: 'STR-000002',
+      lastPaymentAt: new Date('2025-11-20'),
     },
   });
 
