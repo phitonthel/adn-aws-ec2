@@ -2,6 +2,9 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import healthRouter from './routes/health.js';
+import authRouter from './routes/v1/iai/auth.js';
+import v1Router from './routes/v1/index.js';
+import { authMiddleware } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -13,8 +16,15 @@ const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
 // Middleware
 app.use(express.json());
 
-// Health check route
+// Public routes (no auth required)
 app.use('/health', healthRouter);
+app.use('/v1/iai/auth', authRouter);
+
+// Apply authentication middleware to all other routes
+app.use(authMiddleware);
+
+// Protected routes
+app.use('/v1', v1Router);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
