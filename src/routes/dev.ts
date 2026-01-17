@@ -13,8 +13,9 @@ router.get('/iai-users/:membershipId', async (req: Request, res: Response) => {
     const response = await fetch(`https://ext-api.iai.or.id/users/${membershipId}`);
 
     if (!response.ok) {
+      console.log("Failed Response:", response.status, response.statusText);
       return res.status(response.status).json({
-        error: 'Failed to fetch user from remunerasi.iai.or.id',
+        error: 'Failed to fetch user from ext-api.iai.or.id',
         status: response.status,
         statusText: response.statusText,
       });
