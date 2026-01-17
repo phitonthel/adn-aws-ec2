@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import healthRouter from './routes/health.js';
-import devRouter from './routes/dev'
+import devRouter from './routes/dev.js'
 import authRouter from './routes/v1/iai/auth.js';
 import v1Router from './routes/v1/index.js';
 import { authMiddleware } from './middleware/auth.js';
