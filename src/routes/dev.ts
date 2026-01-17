@@ -22,12 +22,15 @@ router.get('/iai-users/:membershipId', async (req: Request, res: Response) => {
 
     const data = await response.json();
 
+    console.log("Response:", data);
+
     res.status(200).json({
       success: true,
       membershipId,
       data,
     });
   } catch (error) {
+    console.log("Error:", error);
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
