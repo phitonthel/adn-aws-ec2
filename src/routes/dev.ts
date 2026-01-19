@@ -10,7 +10,7 @@ router.get('/iai-users/:membershipId', async (req: Request, res: Response) => {
   try {
     const { membershipId } = req.params;
 
-    const response = await fetch(`https://ext-api.iai.or.id/users/${membershipId}`, {
+    const response = await fetch(`https://ext-api.iai.or.id/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "NODE_ENV=production node dist/index.js",
-    "pm2:start": "pm2 start dist/index.js --name adn-api",
+    "pm2:start": "pm2 delete adn-api || true && npm run build && NODE_ENV=production pm2 start dist/index.js --name adn-api",
     "pm2:stop": "pm2 stop adn-api",
     "pm2:restart": "pm2 restart adn-api",
     "pm2:logs": "pm2 logs adn-api",
