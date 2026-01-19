@@ -12,7 +12,7 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 const PORT = parseInt(process.env.PORT || '3000', 10);
-const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+const HOST = '0.0.0.0';
 
 // Middleware
 app.use(express.json());
