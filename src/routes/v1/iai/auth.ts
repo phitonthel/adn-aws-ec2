@@ -39,7 +39,7 @@ router.post('/send-otp', async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         error: 'Failed to send OTP',
-        message: 'error' in apiResponse ? apiResponse.error : 'Unknown error',
+        message: 'error' in apiResponse ? apiResponse.error : 'Phone number not registered as IAI member.',
       });
     }
 
