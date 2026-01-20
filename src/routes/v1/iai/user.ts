@@ -6,7 +6,7 @@ const router = Router();
  * GET /dev/iai-users/:membershipId
  * Hits the remunerasi.iai.or.id API to fetch user data by membershipId
  */
-router.get('/iai-users/:membershipId', async (req: Request, res: Response) => {
+router.get('/:membershipId', async (req: Request, res: Response) => {
   try {
     const { membershipId } = req.params;
 
@@ -30,8 +30,6 @@ router.get('/iai-users/:membershipId', async (req: Request, res: Response) => {
     }
 
     const data = await response.json();
-
-    console.log("Response:", data);
 
     res.status(200).json({
       success: true,

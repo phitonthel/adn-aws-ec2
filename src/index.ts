@@ -2,8 +2,6 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import healthRouter from './routes/health.js';
-import devRouter from './routes/dev.js'
-import authRouter from './routes/v1/iai/auth.js';
 import v1Router from './routes/v1/index.js';
 import { authMiddleware } from './middleware/auth.js';
 
@@ -16,14 +14,13 @@ const HOST = '0.0.0.0';
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Public routes (no auth required)
 app.use('/health', healthRouter);
-app.use('/dev', devRouter);
-app.use('/v1/iai/auth', authRouter);
 
 // Apply authentication middleware to all other routes
-app.use(authMiddleware);
+// app.use(authMiddleware);
 
 // Protected routes
 app.use('/v1', v1Router);
