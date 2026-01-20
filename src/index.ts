@@ -13,47 +13,21 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = '0.0.0.0';
 
 // CORS configuration
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
-  : ['http://localhost:3000', 'http://localhost:5173', 'https://iai-calculator.web.app'];
+console.log('=== CORS SETUP ===');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN);
 
-console.log('CORS Configuration:');
-console.log('- NODE_ENV:', process.env.NODE_ENV);
-console.log('- Allowed Origins:', allowedOrigins);
-
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    console.log('CORS request from origin:', origin);
-
-    // Allow requests with no origin (like mobile apps, curl, or Postman)
-    if (!origin) {
-      console.log('✓ No origin - allowing');
-      return callback(null, true);
-    }
-
-    // In development, allow all origins
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('✓ Development mode - allowing all origins');
-      return callback(null, true);
-    }
-
-    // In production, check whitelist
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      console.log('✓ Origin in whitelist - allowing');
-      callback(null, true);
-    } else {
-      console.log('✗ Origin NOT in whitelist - blocking');
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+// Simple CORS - allow all for debugging
+app.use(cors({
+  origin: true, // Reflect the request origin
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
   optionsSuccessStatus: 200,
-};
+}));
 
-// Middleware
-app.use(cors(corsOptions));
+console.log('✓ CORS enabled for all origins');
+console.log('==================');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
