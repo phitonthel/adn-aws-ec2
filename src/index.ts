@@ -1,9 +1,9 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import healthRouter from './routes/health.js';
 import v1Router from './routes/v1/index.js';
-import { authMiddleware } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -12,7 +12,17 @@ const prisma = new PrismaClient();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = '0.0.0.0';
 
+// CORS configuration
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || '*', // Allow all origins in development
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
 // Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

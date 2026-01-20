@@ -1,16 +1,18 @@
 import { Router, Request, Response } from 'express';
+import { OTPService } from '../../../services/otpService';
+import { generateTokenFromPhone } from '../../../utils/jwt';
+import { IAIApiService } from '../../../services/iaiApiService';
+import { IAIApiResponse, IAIMemberData } from '../../../types/iai';
 
 const router = Router();
 
 /**
  * POST /v1/iai/auth/send-otp
- * Verify OTP code for IAI member authentication
+ * Send OTP code for IAI member authentication
  */
 router.post('/send-otp', async (req: Request, res: Response) => {
   try {
     const { phoneNumber } = req.body;
-    console.log(req.body)
-
     // Validate input
     if (!phoneNumber) {
       return res.status(400).json({
@@ -20,73 +22,115 @@ router.post('/send-otp', async (req: Request, res: Response) => {
     }
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit OTP
+
+    // Store OTP in Redis
+    await OTPService.storeOTP(phoneNumber, otpCode);
     console.log(`Generated OTP Code for ${phoneNumber}: ${otpCode}`);
 
-    // Call external IAI API
+    // Call external IAI API (or mock)
     const payload = {
       no_whatsapp: phoneNumber,
       otp_code: otpCode,
     };
 
-    console.log("Calling external API with JSON payload:", payload);
+    const apiResponse = await IAIApiService.sendOTP(payload);
 
-    const response = await fetch('https://ext-api.iai.or.id/otorisasi_otp.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    console.log("Response status:", response.status);
-    console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-
-    if (!response.ok) {
-      console.log("OTP Verification Failed:", response.status, response.statusText);
-      const errorText = await response.text();
-      console.log("Error response body:", errorText);
-      return res.status(response.status).json({
-        error: 'OTP verification failed',
-        status: response.status,
-        statusText: response.statusText,
-        details: errorText || 'Empty response',
-      });
-    }
-
-    const responseText = await response.text();
-    console.log("Raw response:", responseText);
-    console.log("Response length:", responseText.length);
-
-    // Handle empty response
-    if (!responseText || responseText.trim().length === 0) {
-      console.log("Empty response from external API");
-      return res.status(200).json({
+    if (!apiResponse.success) {
+      return res.status(400).json({
         success: false,
-        error: 'External API returned empty response',
-        message: 'The IAI API did not return any data. The endpoint may not exist or may require different parameters.',
+        error: 'Failed to send OTP',
+        message: 'error' in apiResponse ? apiResponse.error : 'Unknown error',
       });
     }
 
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.log("Failed to parse JSON:", parseError);
-      return res.status(200).json({
-        success: true,
-        data: responseText, // Return raw text if not JSON
-        isRawText: true,
+    const iaiData: IAIApiResponse = apiResponse as IAIApiResponse;
+    const memberData: IAIMemberData = iaiData.data.data;
+
+    // Validate STRA number
+    if (!memberData.straNumber || memberData.straNumber.trim() === '') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied',
+        message: 'Only IAI members with STRA are allowed to use this service.',
       });
     }
 
-    console.log("OTP Verification Response:", data);
+    // Validate payment recency (within 4 years)
+    const currentYear = new Date().getFullYear();
+    const lastPaymentYear = parseInt(memberData.lastPayment);
+    const yearsSincePayment = currentYear - lastPaymentYear;
+
+    if (yearsSincePayment > 4) {
+      return res.status(403).json({
+        success: false,
+        error: 'Payment expired',
+        message: `Your last payment was in ${lastPaymentYear}. Please update your membership payment to continue using this service.`,
+        details: {
+          lastPayment: lastPaymentYear,
+          yearsSincePayment,
+        },
+      });
+    }
 
     res.status(200).json({
       success: true,
-      data,
+      message: 'OTP sent successfully. Please check your WhatsApp.',
+      data: {
+        phoneNumber,
+        expiresIn: 600, // 10 minutes
+        memberInfo: memberData,
+        mockMode: IAIApiService.isMockMode(),
+      },
     });
   } catch (error) {
-    console.log("Error:", error);
+    console.log('Error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * POST /v1/iai/auth/verify-otp
+ * Verify OTP code and generate JWT token
+ */
+router.post('/verify-otp', async (req: Request, res: Response) => {
+  try {
+    const { phoneNumber, otpCode } = req.body;
+
+    // Validate input
+    if (!phoneNumber || !otpCode) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['phoneNumber', 'otpCode'],
+      });
+    }
+
+    // Verify OTP
+    const result = await OTPService.verifyOTP(phoneNumber, otpCode);
+
+    if (!result.valid) {
+      return res.status(401).json({
+        success: false,
+        error: result.error,
+      });
+    }
+
+    // Generate JWT token
+    const token = generateTokenFromPhone(phoneNumber);
+
+    res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully',
+      data: {
+        phoneNumber,
+        token,
+        tokenType: 'Bearer',
+      },
+    });
+  } catch (error) {
+    console.log('Error:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',

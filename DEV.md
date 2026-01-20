@@ -1,0 +1,1 @@
+Postgres installed using docker. Run `docker ps` to see list of docker
