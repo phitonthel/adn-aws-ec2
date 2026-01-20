@@ -44,7 +44,7 @@ router.post('/send-otp', async (req: Request, res: Response) => {
     }
 
     const iaiData: IAIApiResponse = apiResponse as IAIApiResponse;
-    const memberData: IAIMemberData = iaiData.data.data;
+    const memberData: IAIMemberData = iaiData.data;
 
     // Validate STRA number
     if (!memberData.straNumber || memberData.straNumber.trim() === '') {

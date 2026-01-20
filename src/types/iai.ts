@@ -15,10 +15,7 @@ export interface IAIMemberData {
  */
 export interface IAIApiResponse {
   success: boolean;
-  data: {
-    success: boolean;
-    data: IAIMemberData;
-  };
+  data: IAIMemberData;
 }
 
 /**

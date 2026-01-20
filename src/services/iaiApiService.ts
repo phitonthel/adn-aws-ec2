@@ -20,15 +20,12 @@ class MockIAIApiService {
     return {
       success: true,
       data: {
-        success: true,
-        data: {
-          name: 'Ar. Tester Iai Interaktif, IAI',
-          membershipNumber: '99998',
-          straNumber: '1.234.56789',
-          noWa: payload.no_whatsapp,
-          lastPaymentAt: '2024',
-          lastPayment: '2026',
-        },
+        name: 'Ar. Tester Iai Interaktif, IAI',
+        membershipNumber: '99998',
+        straNumber: '1.234.56789',
+        noWa: payload.no_whatsapp,
+        lastPaymentAt: '2024',
+        lastPayment: '2026',
       },
     };
   }
