@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import iaiRouter from './iai/index.js';
+import iaiRouter from './iai/index';
 
 const router = Router();
 

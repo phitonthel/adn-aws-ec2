@@ -2,8 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-import healthRouter from './routes/health.js';
-import v1Router from './routes/v1/index.js';
+import healthRouter from './routes/health';
+import v1Router from './routes/v1/index';
 
 dotenv.config();
 
