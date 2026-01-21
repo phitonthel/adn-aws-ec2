@@ -1,28 +1,68 @@
 import redis from './redisClient';
+import { IAIMemberData } from '../types/iai';
 
 const OTP_EXPIRY = 600; // 10 minutes in seconds
 const MAX_ATTEMPTS = 3;
 
 export class OTPService {
   private static getOTPKey(phoneNumber: string): string {
-    return `otp:${phoneNumber}`;
+    return `iai_otp:${phoneNumber}`;
   }
 
   private static getAttemptsKey(phoneNumber: string): string {
-    return `otp_attempts:${phoneNumber}`;
+    return `iai_otp_attempts:${phoneNumber}`;
+  }
+
+  private static getUserDataKey(phoneNumber: string): string {
+    return `iai_user:${phoneNumber}`;
   }
 
   /**
-   * Store OTP code for a phone number
+   * Store OTP code and user data for a phone number
    * @param phoneNumber - The phone number to store OTP for
    * @param otpCode - The OTP code to store
+   * @param memberData - Member data from IAI API to cache
    */
-  static async storeOTP(phoneNumber: string, otpCode: string): Promise<void> {
-    const key = this.getOTPKey(phoneNumber);
-    await redis.setex(key, OTP_EXPIRY, otpCode);
-    // Reset attempts when new OTP is generated
-    await redis.del(this.getAttemptsKey(phoneNumber));
-    console.log(`Stored OTP for ${phoneNumber}, expires in ${OTP_EXPIRY}s`);
+  static async storeOTPWithUserData(
+    phoneNumber: string,
+    otpCode: string,
+    memberData: IAIMemberData
+  ): Promise<void> {
+    const otpKey = this.getOTPKey(phoneNumber);
+    const userKey = this.getUserDataKey(phoneNumber);
+
+    // Store OTP and user data with same expiry
+    await Promise.all([
+      redis.setex(otpKey, OTP_EXPIRY, otpCode),
+      redis.setex(userKey, OTP_EXPIRY, JSON.stringify(memberData)),
+      redis.del(this.getAttemptsKey(phoneNumber))
+    ]);
+
+    console.log(`Stored OTP and user data for ${phoneNumber}, expires in ${OTP_EXPIRY}s`);
+  }
+
+  /**
+   * Retrieve cached user data for a phone number
+   * @param phoneNumber - The phone number to retrieve data for
+   * @returns Cached member data or null if not found/expired
+   */
+  static async getUserData(phoneNumber: string): Promise<IAIMemberData | null> {
+    const key = this.getUserDataKey(phoneNumber);
+    const data = await redis.get(key);
+
+    if (!data) {
+      console.log(`No cached user data found for ${phoneNumber}`);
+      return null;
+    }
+
+    try {
+      const memberData = JSON.parse(data) as IAIMemberData;
+      console.log(`Retrieved cached user data for ${phoneNumber}`);
+      return memberData;
+    } catch (error) {
+      console.error(`Failed to parse cached user data for ${phoneNumber}:`, error);
+      return null;
+    }
   }
 
   /**

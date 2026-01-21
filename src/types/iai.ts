@@ -6,7 +6,7 @@ export interface IAIMemberData {
   membershipNumber: string;
   straNumber: string;
   noWa: string;
-  lastPaymentAt: string;
+  lastPaymentAt: string; // idk why double, thats from IAI
   lastPayment: string;
 }
 
