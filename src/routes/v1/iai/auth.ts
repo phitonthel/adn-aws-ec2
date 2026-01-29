@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { OTPService } from '../../../services/otpService';
-import { generateToken, generateTokenFromPhone, UserTokenData } from '../../../utils/jwt';
+import { generateToken, generateTokenFromPhone, UserTokenData, verifyToken } from '../../../utils/jwt';
 import { IAIApiService } from '../../../services/iaiApiService';
 import { IAIApiResponse, IAIMemberData } from '../../../types/iai';
 
@@ -247,6 +247,62 @@ router.post('/verify-otp', async (req: Request, res: Response) => {
   } catch (error) {
     console.log('Error:', error);
     res.status(500).json({
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * GET /v1/iai/auth/whoami?token=...
+ * Verify token and return user data
+ */
+router.get('/whoami', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.query;
+
+    // Validate input
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameter',
+        required: ['token'],
+      });
+    }
+
+    // Verify token
+    const decoded = verifyToken(token);
+
+    if (!decoded) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid or expired token',
+      });
+    }
+
+    // Return token and user data
+    return res.status(200).json({
+      success: true,
+      message: 'Token is valid',
+      data: {
+        token,
+        user: {
+          phoneNumber: decoded.phoneNumber,
+          name: decoded.name,
+          membershipNumber: decoded.membershipNumber,
+          straNumber: decoded.straNumber,
+          type: decoded.type,
+        },
+        tokenInfo: {
+          issuedAt: decoded.iat ? new Date(decoded.iat * 1000).toISOString() : undefined,
+          expiresAt: decoded.exp ? new Date(decoded.exp * 1000).toISOString() : undefined,
+        },
+      },
+    });
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(500).json({
+      success: false,
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
     });
